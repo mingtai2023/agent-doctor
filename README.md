@@ -97,3 +97,13 @@ Suggested citation: NovaMint Studio Limited (2026). *Agent Doctor: Community Edi
 ## License
 
 [MIT](LICENSE). Copyright (c) 2026 NovaMint Studio Limited. The license covers this repository; separately distributed Pro materials are excluded.
+
+## 🛠️ Need Enterprise Sandbox & Agent Security Advisory?
+
+**Consulting & Architecture Advisory**
+
+We offer 1-on-1 consulting on AI agent sandbox isolation, working directory protection, and architecture review.
+
+**Rate** — $49 USD / Hour
+
+Send an email to support@nova-mint.store with your stack details and preferred time slot. We will confirm your schedule and provide a direct secure checkout link.
