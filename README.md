@@ -1,109 +1,89 @@
-# Agent Doctor
+# 🩺 Agent Doctor (Community Edition)
 
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
-[![Created by NovaMint Studio](https://img.shields.io/badge/created_by-NovaMint_Studio-black.svg)](https://nova-mint.store)
+> **Static Inspection, Quarantine & Recovery Toolkit for Autonomous AI Agent Workspaces.**
+> A lightweight, on-demand CLI utility to diagnose corrupted context, safely quarantine infected agent session files, and restore workspace snapshots without running background daemons.
 
-**Keep agent memory inspectable. Keep file tools inside their workspace.**
+[![Version: 0.2.0](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/mingtai2023/agent-doctor)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Official Store](https://img.shields.io/badge/Official-nova--mint.store-00C49F)](https://nova-mint.store)
 
-Agent Doctor Community Edition provides read-only context diagnostics and an explicit workspace jail for Python agent integrations. Zero third-party runtime dependencies. Created by **NovaMint Studio Limited**.
+---
 
-## The problem
+### ⚠️ IMPORTANT LEGAL DISCLAIMER / 法律免責聲明
 
-Autonomous agents such as AutoGPT and Hermes can lose track of their working directory, attempt writes under `/home/` or filesystem roots, and accumulate error traces in persistent memory. These failures make context harder to trust and tool behavior harder to predict.
+> **PLEASE READ CAREFULLY BEFORE USE:**
+> **Agent Doctor Community Edition is an experimental, open-source diagnostic and file management utility provided "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.**
+> In no event shall the authors, contributors, or NovaMint Studio Limited be liable for any claim, damages, data loss, corrupted workspaces, interrupted agent processes, or other liability arising from the use of, or inability to use, this software. Users are solely responsible for creating independent backups of their codebase, databases, and agent memory snapshots prior to running quarantine or restore commands.
 
-Agent Doctor surfaces memory pollution signals, detects changes against a trusted context digest, and rejects paths outside a designated workspace before your file tool uses them.
+---
 
-## Quickstart
+### 🎯 What Agent Doctor Community Edition Does (And Doesn't Do)
 
-Install directly from GitHub (no PyPI release required):
+Agent Doctor Community Edition is intentionally designed as an **on-demand, zero-daemon, one-shot CLI tool**.
 
-```sh
-python -m pip install "git+https://github.com/mingtai2023/agent-doctor.git"
+- **✅ What It Does:**
+  - **On-Demand Inspection**: Scans workspace logs, session files, and memory snapshots from autonomous agents (such as **Hermes Agent**, **CrewAI**, **LangChain**, and **AutoGen**) for corrupted context tokens and injection patterns.
+  - **Safe Quarantine**: Moves suspicious or broken agent output files into an isolated `.agent_doctor_quarantine/` vault with an automated index ledger.
+  - **Reversible Recovery**: Allows immediate, one-command restoration of quarantined files back to their original paths.
+- **❌ What It Does NOT Do:**
+  - **No Background Monitoring**: Does not run daemon processes or monitor active memory vectors in real-time.
+  - **No Kernel/System Interception**: Does not block ongoing OS processes or system calls on the fly. Real-time active memory defense and sandbox containment matrices are reserved for enterprise environments.
+
+---
+
+### ⚡ Quickstart
+
+```bash
+pip install agent-doctor
+```
+1. One-Shot Workspace Scan
+Scan your agent's current working directory for abnormal tokens and prompt injection payloads:
+
+```bash
+agent-doctor scan --dir ./my_agent_workspace
+```
+2. Quarantine Suspicious Files
+Move detected or corrupted files out of the active runtime into the isolated quarantine vault:
+```bash
+agent-doctor quarantine --dir ./my_agent_workspace
+```
+3. Restore Files
+Safely restore files back to the active directory whenever needed:
+```bash
+agent-doctor restore --dir ./my_agent_workspace --file session_memory_20261105.json
+# Or restore all quarantined files:
+agent-doctor restore --dir ./my_agent_workspace --all
 ```
 
-Or clone and install locally:
+### Workspace and recovery safety
 
-```sh
-git clone https://github.com/mingtai2023/agent-doctor.git
-cd agent-doctor
-python -m pip install -e .
-python examples/quickstart.py
+Run commands only against an approved, stopped agent workspace. The file format adapters inspect JSON, UTF-8 TXT, and SQLite (`.sqlite`, `.sqlite3`, `.db`) files produced by Hermes Agent, CrewAI, LangChain, and similar agents. No framework integration or running agent is required.
+
+Use the same workspace for all commands:
+
+```bash
+agent-doctor scan --dir ./my_agent_workspace
+agent-doctor quarantine --dir ./my_agent_workspace
+agent-doctor restore --dir ./my_agent_workspace --file session_memory_20261105.json
+agent-doctor restore --dir ./my_agent_workspace --all
+agent-doctor --version
 ```
 
-Three lines to guard a file-tool path; run from your existing, approved project directory:
+Scan reports relative paths, SHA-256 hashes, and heuristic findings without printing file contents. Exit codes: `0` success/clean scan, `1` scan findings, `2` operational error. Findings are review signals, not proof of compromise; injection detection can miss attacks or flag legitimate quotations. JSON syntax, UTF-8 decoding, and SQLite integrity are checked. TXT has no schema to validate.
 
-```python
-from agent_doctor import WorkspaceJail
-jail = WorkspaceJail(".")
-safe_path = jail.resolve("memory.json")
+Quarantine rescans and moves flagged files into `.agent_doctor_quarantine/` with an index recording original paths and hashes. SQLite files with WAL, SHM, or journal sidecars are reported but never moved; stop the writer and checkpoint the database first. Back up independently before moving files. Do not run concurrent commands or modify the workspace during inspection/recovery.
+
+Restore verifies hashes and refuses existing destinations, workspace escapes, and ambiguous basenames. Use the original relative path to select duplicate names. Keep the vault and `index.json` together. The vault is excluded from scans; creation requests owner-only permissions on POSIX. On Windows, access follows inherited ACLs: configure directory permissions for sensitive workspaces. The vault is not encrypted and is not a security sandbox against processes running as the same user. Recovery preserves file bytes and original paths, not every filesystem metadata field.
+
+### Official store and advanced services
+
+Visit the [NovaMint official store](https://nova-mint.store) for [advanced services and enterprise inquiries](https://nova-mint.store). Community Edition remains a one-shot static CLI: no daemon, background hook, real-time file interception, or filesystem guard.
+
+### Development
+
+```bash
+python -m pip install -e . pytest
+python -m pytest -q
 ```
 
-Pass `safe_path` to your file operation. Route **every** agent file-tool path through `jail.resolve()` immediately before use. Relative paths resolve from the workspace, independent of the process working directory. Parent traversal, outside absolute paths, resolved symlink escapes, and paths containing a `home` component are rejected. Filesystem roots and workspaces under `/home/` are intentionally unsupported; choose a dedicated workspace such as `/srv/agent-workspace` on Linux.
-
-Inspect a memory file:
-
-```sh
-agent-doctor memory.json --workspace .
-agent-doctor memory.json --workspace . --expected-sha256 YOUR_TRUSTED_64_CHARACTER_SHA256
-```
-
-The CLI prints JSON with a digest and findings, never memory content. Exit codes: `0` for no findings, `1` for findings, `2` for invalid input or read failure. The default file size limit is 1 MiB. Python callers can set `max_bytes` in `diagnose()`.
-
-## What the diagnostics mean
-
-- `error_markers`: error or traceback keywords may indicate memory pollution.
-- `invalid_json` / `invalid_utf8`: the input has a structural or encoding issue.
-- `home_path_reference`: context mentions a potentially unwanted home-directory path.
-- `context_changed`: bytes differ from a caller-supplied trusted SHA-256 baseline.
-
-Findings require review. Error examples in healthy memory can trigger markers; a digest change can be intentional. This tool does not establish factual truth, prove hallucinations, or measure semantic drift. It never prunes, repairs, or quarantines memory.
-
-## Boundary model
-
-The jail is a cooperative application-level path validator. It does not intercept arbitrary Python I/O, shell commands, subprocesses, or network tools. It cannot prevent a concurrent process from replacing symlinks or directories between validation and I/O, or stop writes through existing hard links. Use OS permissions and container isolation for hostile agents; do not let untrusted processes mutate the workspace directory topology. The example illustrates integration, not an OS security boundary.
-
-## Go further with Agent Doctor Pro
-
-Start with the community core. Move to the flagship architecture package when you need an operational defense strategy across agents.
-
-| Capability | Community (MIT) | Pro ($69 USD) |
-| --- | --- | --- |
-| Read-only CLI memory checks | Included | Included in the broader architecture |
-| Static workspace path boundary | Included | Included in the broader architecture |
-| 24/7 automatic repair and defense | Not included | Pro offering |
-| Long-term multi-agent memory sandbox blueprints | Not included | Pro offering |
-| Complete 200+ page defense and architecture manual | Not included | Pro offering |
-
-**Get the full enterprise architecture & sandbox blueprints at https://nova-mint.store ($69 USD)**
-
-[Explore the official Agent Doctor Pro flagship showroom](https://nova-mint.store) for 24/7 automatic repair defense, multi-agent sandbox blueprints, and the complete 200+ page defense manual. Pro materials and automation code are distributed separately and are not part of this MIT repository.
-
-## Development
-
-```sh
-python -m pip install -e .
-python -m unittest discover -s tests -v
-```
-
-Contributions to diagnostics, integration examples, and boundary tests are welcome. Keep reports synthetic and never submit private agent memory, credentials, or environment files.
-
-## Author & citation
-
-Agent Doctor originated at **NovaMint Studio Limited**.
-
-Suggested citation: NovaMint Studio Limited (2026). *Agent Doctor: Community Edition*, version 0.1.0. https://github.com/mingtai2023/agent-doctor
-
-## License
-
-[MIT](LICENSE). Copyright (c) 2026 NovaMint Studio Limited. The license covers this repository; separately distributed Pro materials are excluded.
-
-## 🛠️ Need Enterprise Sandbox & Agent Security Advisory?
-
-**Consulting & Architecture Advisory**
-
-We offer 1-on-1 consulting on AI agent sandbox isolation, working directory protection, and architecture review.
-
-**Rate** — $49 USD / Hour
-
-Send an email to support@nova-mint.store with your stack details and preferred time slot. We will confirm your schedule and provide a direct secure checkout link.
+Licensed under [MIT](LICENSE).

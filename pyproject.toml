@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-doctor"
-version = "0.1.0"
-description = "Read-only agent memory diagnostics and explicit workspace boundaries"
+version = "0.2.0"
+description = "One-shot static agent workspace inspection, quarantine and recovery"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -18,7 +18,7 @@ Repository = "https://github.com/mingtai2023/agent-doctor"
 Homepage = "https://nova-mint.store"
 
 [project.scripts]
-agent-doctor = "agent_doctor.diagnostic:main"
+agent-doctor = "agent_doctor.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
